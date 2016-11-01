@@ -1,0 +1,19 @@
+---
+- name: reload supervisor
+  service: name=supervisor state=reloaded
+
+- name: restart supervisor
+  service: name=supervisor state=restarted
+
+- name: stop supervisor
+  service: name=supervisor state=stopped
+
+- name: ensure supervisor service
+  service: name=supervisor state=started
+
+# assuming all programs are grouped
+- name: reload and restart supervisor for project
+  shell: supervisorctl reread
+  shell: supervisorctl update {{supervisor_group}}
+  shell: supervisorctl restart {{supervisor_group}}:*
+  notify: ensure supervisor service

@@ -1,0 +1,66 @@
+---
+- hosts: webserver
+  vars:
+    reponame: Loan-Submission-Form
+    supervisor_programs:
+      - program_name: loanapp
+        program_command: ~/sites/{{reponame}}/gunicorn_start.bash
+        program_priority: 999
+        program_directory: ~/sites/{{reponame}}
+        program_username: manmohanalla
+  roles:
+    # - role: jdauphant.nginx
+    #   become: true
+    #   nginx_events_params:
+    #     - worker_connections 1024
+    #     - use epoll
+    #     - multi_accept on
+    #   nginx_configs:
+    #     proxy:
+    #         - proxy_set_header X-Real-IP  $remote_addr
+    #         - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
+    #     upstream:
+    #         - upstream loanapp { server 127.0.0.1:8000; }
+    #   nginx_http_params:
+    #     - sendfile on
+    #     - access_log /var/log/nginx/access.log
+    #   nginx_sites:
+    #      loan_app:
+    #        - listen 80
+    #        - server_name manmohan.xyz
+    #        - location / { proxy_pass  http://loanapp/; include /etc/nginx/proxy_params; }
+   - { role: futurice.supervisor, become: true }
+  tasks:
+   # - name: updates a server
+   #   apt: update_cache=yes 
+   #   become: true
+   # - name: upgrade a server
+   #   apt: upgrade=dist
+   #   become: true
+   # - name: install Build essential, git, pip
+   #   action: apt pkg={{item}} state=installed
+   #   become: true
+   #   with_items:
+   #   - build-essential
+   #   - git-core
+   #   - python-pip
+
+   # - name: Creates directory
+   #   file: path=~/sites/{{reponame}} state=directory owner=manmohanalla mode=0755
+
+   # - name: Setup the Git repo
+   #   git: repo=https://github.com/manmohana/Loan-Submission-Form.git dest=~/sites/{{reponame}} accept_hostkey=yes
+
+   # - name: Install requirements
+   #   pip: requirements=~/sites/{{reponame}}/requirements.txt
+
+   - name: Create supervisor app conf
+     become: true
+     template: src=supervisor_program.conf dest=/etc/supervisor/conf.d/{{item.program_name}}.conf
+     with_items: "{{supervisor_programs}}"
+     notify:
+      - restart supervisor
+
+   - name: Start supervisor
+     become: true
+     service: name=supervisor state=started
